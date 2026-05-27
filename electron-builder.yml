@@ -1,0 +1,23 @@
+appId: br.com.minasautopecas.caixa
+productName: MinasCaixa
+directories:
+  output: release/${version}
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+  - "!**/*.map"
+asar: true
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: MinasCaixa-Setup-${version}.exe
+  shortcutName: MinasCaixa
+publish: null
