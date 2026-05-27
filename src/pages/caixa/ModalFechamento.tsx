@@ -14,12 +14,10 @@ const ZERO: Totais = { dinheiro: 0, pix: 0, debito: 0, credito: 0 }
 
 export function ModalFechamento({ open, onClose, onFechado }: Props) {
   const { totaisVendas, totaisRecebimentos, totalDespesas } = useCaixaStore()
-  const [caderno, setCaderno] = useState<Totais>(ZERO)
   const [fisico, setFisico] = useState<Totais>(ZERO)
   const [submitting, setSubmitting] = useState(false)
   const [obs, setObs] = useState('')
 
-  // Sistema = vendas + recebimentos − despesas (dinheiro)
   const sistema: Totais = {
     dinheiro: totaisVendas.dinheiro + totaisRecebimentos.dinheiro - totalDespesas,
     pix: totaisVendas.pix + totaisRecebimentos.pix,
@@ -28,7 +26,7 @@ export function ModalFechamento({ open, onClose, onFechado }: Props) {
   }
 
   useEffect(() => {
-    if (open) { setCaderno(ZERO); setFisico(ZERO); setObs('') }
+    if (open) { setFisico(ZERO); setObs('') }
   }, [open])
 
   const diffDinheiro = fisico.dinheiro - sistema.dinheiro
@@ -36,8 +34,9 @@ export function ModalFechamento({ open, onClose, onFechado }: Props) {
     (fisico.dinheiro + fisico.pix + fisico.debito + fisico.credito) -
     (sistema.dinheiro + sistema.pix + sistema.debito + sistema.credito)
 
-  const temDiferenca = diffTotal !== 0 || diffDinheiro !== 0 ||
-    Object.keys(sistema).some((k) => fisico[k as Campo] !== sistema[k as Campo] || caderno[k as Campo] !== sistema[k as Campo])
+  const temDiferenca = Object.keys(sistema).some(
+    (k) => fisico[k as Campo] !== sistema[k as Campo],
+  )
 
   async function submit() {
     if (temDiferenca && !obs.trim()) {
@@ -45,7 +44,7 @@ export function ModalFechamento({ open, onClose, onFechado }: Props) {
       return
     }
     setSubmitting(true)
-    const { error } = await rpcFecharCaixa({ data: hojeBelem(), caderno, fisico })
+    const { error } = await rpcFecharCaixa({ data: hojeBelem(), caderno: ZERO, fisico })
     setSubmitting(false)
     if (error) {
       toast.error('Falha ao fechar', { description: error })
@@ -56,11 +55,11 @@ export function ModalFechamento({ open, onClose, onFechado }: Props) {
     onClose()
   }
 
-  function setVal(setter: typeof setCaderno, campo: Campo) {
+  function setVal(campo: Campo) {
     return (val: string) => {
-      try { setter((c) => ({ ...c, [campo]: parseUserInput(val) })) }
+      try { setFisico((c) => ({ ...c, [campo]: parseUserInput(val) })) }
       catch (e) {
-        if (val === '' || val === '0') setter((c) => ({ ...c, [campo]: 0 }))
+        if (val === '' || val === '0') setFisico((c) => ({ ...c, [campo]: 0 }))
         else if (e instanceof MoneyError) { /* ignora durante digitação */ }
       }
     }
@@ -70,16 +69,15 @@ export function ModalFechamento({ open, onClose, onFechado }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-4xl rounded-lg border bg-card p-6 shadow-2xl">
+      <div className="w-full max-w-3xl rounded-lg border bg-card p-6 shadow-2xl">
         <h2 className="mb-1 text-xl font-bold">Fechamento de Caixa (F12)</h2>
         <p className="mb-5 text-xs text-muted-foreground">
-          Conferência tripla: Sistema × Caderno × Físico. Diferença não-zero exige observação.
+          Confira: o que o SISTEMA somou × o que você tem em mãos (FÍSICO). Diferença ≠ 0 exige observação.
         </p>
 
-        <div className="grid grid-cols-5 gap-3 text-sm">
+        <div className="grid grid-cols-4 gap-3 text-sm">
           <div className="font-semibold text-muted-foreground">Forma</div>
           <div className="font-semibold text-center">SISTEMA</div>
-          <div className="font-semibold text-center">CADERNO</div>
           <div className="font-semibold text-center">FÍSICO</div>
           <div className="font-semibold text-center">Diferença</div>
 
@@ -91,12 +89,7 @@ export function ModalFechamento({ open, onClose, onFechado }: Props) {
                 <div className="self-center text-right font-mono">{centsToBRL(sistema[c])}</div>
                 <input
                   placeholder="0,00"
-                  onChange={(e) => setVal(setCaderno, c)(e.target.value)}
-                  className="rounded border bg-background px-2 py-1 text-right font-mono outline-none ring-ring focus-visible:ring-2"
-                />
-                <input
-                  placeholder="0,00"
-                  onChange={(e) => setVal(setFisico, c)(e.target.value)}
+                  onChange={(e) => setVal(c)(e.target.value)}
                   className="rounded border bg-background px-2 py-1 text-right font-mono outline-none ring-ring focus-visible:ring-2"
                 />
                 <div className={cn(
@@ -116,6 +109,10 @@ export function ModalFechamento({ open, onClose, onFechado }: Props) {
             <span className={cn('font-mono font-bold', diffTotal !== 0 && 'text-destructive')}>
               {centsToBRL(diffTotal)}
             </span>
+          </div>
+          <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+            <span>Diferença só no dinheiro:</span>
+            <span className="font-mono">{centsToBRL(diffDinheiro)}</span>
           </div>
         </div>
 
