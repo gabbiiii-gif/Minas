@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import type { Database } from '@/types/database'
 
 type Fechamento = Database['public']['Tables']['fechamentos_caixa']['Row']
-type FechamentoComOperador = Fechamento & { profiles?: { nome: string; role: string } | null }
+type FechamentoComOperador = Fechamento & { operador_nome?: string | null }
 
 export default function Fechamentos() {
   const { profile } = useAuthStore()
@@ -18,13 +18,28 @@ export default function Fechamentos() {
 
   async function load() {
     setLoading(true)
-    const { data, error } = await supabase
+    const { data: fech, error } = await supabase
       .from('fechamentos_caixa')
-      .select('*, profiles!fechamentos_caixa_operador_id_fkey(nome, role)')
+      .select('*')
       .order('data', { ascending: false })
       .limit(60)
-    if (error) toast.error('Falha ao carregar', { description: error.message })
-    setItems((data ?? []) as FechamentoComOperador[])
+    if (error) {
+      toast.error('Falha ao carregar', { description: error.message })
+      setLoading(false)
+      return
+    }
+
+    const operadorIds = Array.from(new Set((fech ?? []).map((f) => f.operador_id)))
+    let nomesMap: Record<string, string> = {}
+    if (operadorIds.length > 0) {
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('id, nome')
+        .in('id', operadorIds)
+      nomesMap = Object.fromEntries((profs ?? []).map((p) => [p.id, p.nome]))
+    }
+
+    setItems(((fech ?? []) as Fechamento[]).map((f) => ({ ...f, operador_nome: nomesMap[f.operador_id] ?? null })))
     setLoading(false)
   }
 
@@ -94,7 +109,7 @@ export default function Fechamentos() {
               return (
                 <tr key={f.id} className="border-b align-top">
                   <td className="py-2 font-mono">{f.data}</td>
-                  <td>{f.profiles?.nome ?? f.operador_id.substring(0, 8)}</td>
+                  <td>{f.operador_nome ?? f.operador_id.substring(0, 8)}</td>
                   <td>
                     <span className={cn(
                       'rounded px-2 py-0.5 text-xs font-bold uppercase',

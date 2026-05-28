@@ -14,11 +14,15 @@
     "allowImportingTsExtensions": false,
     "isolatedModules": true,
     "useDefineForClassFields": true,
+    "ignoreDeprecations": "5.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    },
-    "types": ["vite/client", "node"]
+    }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/vite-env.d.ts"
+  ]
 }

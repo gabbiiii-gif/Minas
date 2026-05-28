@@ -82,7 +82,23 @@ Cada lançamento no PC Caixa aparece no Dashboard ADM em ≤2s via Supabase Real
 4. Caixa fechado bloqueia lançamentos retroativos (trigger Postgres).
 5. RLS bloqueia operador de ver/lançar em dia ≠ hoje (admin tem acesso total).
 
-## 9) Pendências futuras (fora MVP)
+## 9) Troubleshoot Windows — Smart App Control
+
+Se `npm run build:web` falhar com:
+
+```
+Cannot find module @rollup/rollup-win32-x64-msvc
+Uma política de Controle de Aplicativos bloqueou este arquivo.
+```
+
+É o **Smart App Control** (ou App Locker) bloqueando a binary nativa do Rollup.
+Opções:
+
+1. **Desativar Smart App Control** (Configurações > Privacidade > Segurança Windows > Controle de Aplicativos > Desativar — exige reboot, irreversível na sessão).
+2. **Mover projeto pra fora de OneDrive** (`C:\dev\minascaixa`). OneDrive + SAC interagem mal com binários nativos.
+3. **Confiar no Vercel** — cloud roda Linux, sem esse bloqueio. Para dev local use `npm run dev:web` (esbuild, não Rollup native) — funciona sem build.
+
+## 10) Pendências futuras (fora MVP)
 
 - Impressora térmica ESC/POS (`electron/printer.ts` é stub — integrar `node-thermal-printer` após validar modelo).
 - Exportação PDF (atual exporta CSV — instalar `@react-pdf/renderer` ou `jspdf` quando necessário).

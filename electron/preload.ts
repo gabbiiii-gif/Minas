@@ -21,10 +21,8 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  // @ts-expect-error fallback no-isolation
-  window.electron = electronAPI
-  // @ts-expect-error fallback no-isolation
-  window.api = api
+  ;(window as unknown as { electron: typeof electronAPI; api: typeof api }).electron = electronAPI
+  ;(window as unknown as { electron: typeof electronAPI; api: typeof api }).api = api
 }
 
 export type ExposedApi = typeof api
