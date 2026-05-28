@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { centsToBRL } from '@/lib/money'
 import { hojeBelem, formatTimeBelem } from '@/lib/date'
 import { supabase } from '@/lib/supabase'
@@ -6,6 +7,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useCaixaStore, type Venda, type Recebimento, type Despesa } from '@/stores/caixa'
 import { useRealtimeTable } from '@/hooks/useRealtimeTable'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
+import { rpcExcluirVenda, rpcExcluirDespesa, rpcExcluirRecebimento } from '@/lib/rpc'
 import { ModalVenda } from './ModalVenda'
 import { ModalPromissoria } from './ModalPromissoria'
 import { ModalReceberPromissoria } from './ModalReceberPromissoria'
@@ -103,6 +105,35 @@ export default function Caixa() {
   const linhas = mergeLinhas(vendasQuery.rows, recebimentosQuery.rows, despesasQuery.rows)
   const totalDia = totaisVendas.dinheiro + totaisVendas.pix + totaisVendas.debito + totaisVendas.credito
 
+  async function excluirLinha(l: Linha) {
+    if (fechado) { toast.error('Caixa fechado'); return }
+    if (l.tag === 'PROMISSORIA') {
+      toast.error('Promissória não pode ser excluída pelo caixa. Fale com o admin.')
+      return
+    }
+    const motivo = prompt(
+      `Excluir ${l.tag} de ${centsToBRL(l.valor)}?\n\nMotivo obrigatório (mínimo 5 caracteres):`,
+      '',
+    )
+    if (motivo === null) return
+    if (motivo.trim().length < 5) {
+      toast.error('Motivo deve ter pelo menos 5 caracteres')
+      return
+    }
+    const [kind, id] = [l.key.slice(0, 1), l.key.slice(2)]
+    const call =
+      kind === 'v' ? rpcExcluirVenda({ id, motivo: motivo.trim() }) :
+      kind === 'r' ? rpcExcluirRecebimento({ id, motivo: motivo.trim() }) :
+      kind === 'd' ? rpcExcluirDespesa({ id, motivo: motivo.trim() }) :
+      Promise.resolve({ error: 'tipo desconhecido' })
+    const { error } = await call
+    if (error) {
+      toast.error('Falha ao excluir', { description: error })
+      return
+    }
+    toast.success(`${l.tag} excluído`)
+  }
+
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-between border-b px-6 py-3">
@@ -169,16 +200,27 @@ export default function Caixa() {
               </li>
             )}
             {linhas.map((l) => (
-              <li key={l.key} className="flex items-center justify-between px-6 py-2 text-sm">
-                <div>
+              <li key={l.key} className="group flex items-center justify-between px-6 py-2 text-sm hover:bg-muted/30">
+                <div className="min-w-0 flex-1">
                   <span className="text-xs text-muted-foreground">{formatTimeBelem(l.created_at)}</span>
                   <span className={cn('ml-3 rounded px-2 py-0.5 text-xs font-bold uppercase', l.tagClass)}>
                     {l.tag}
                   </span>
-                  {l.obs && <span className="ml-2 text-xs text-muted-foreground">— {l.obs}</span>}
+                  {l.obs && <span className="ml-2 truncate text-xs text-muted-foreground">— {l.obs}</span>}
                 </div>
-                <div className={cn('font-mono font-semibold', l.tag === 'DESPESA' && 'text-destructive')}>
-                  {l.tag === 'DESPESA' ? '-' : ''}{centsToBRL(l.valor)}
+                <div className="flex items-center gap-3">
+                  <div className={cn('font-mono font-semibold', l.tag === 'DESPESA' && 'text-destructive')}>
+                    {l.tag === 'DESPESA' ? '-' : ''}{centsToBRL(l.valor)}
+                  </div>
+                  {!fechado && l.tag !== 'PROMISSORIA' && (
+                    <button
+                      onClick={() => excluirLinha(l)}
+                      title="Excluir (com motivo)"
+                      className="rounded px-2 py-0.5 text-xs text-muted-foreground opacity-0 hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </li>
             ))}

@@ -48,6 +48,30 @@ export async function rpcFecharCaixa(args: {
   return { id: (data as string | null) ?? null, error: error?.message ?? null }
 }
 
+export async function rpcExcluirVenda(args: { id: string; motivo: string }) {
+  const { error } = await supabase.rpc('excluir_venda' as never, {
+    p_venda_id: args.id,
+    p_motivo: args.motivo,
+  } as never)
+  return { error: error?.message ?? null }
+}
+
+export async function rpcExcluirDespesa(args: { id: string; motivo: string }) {
+  const { error } = await supabase.rpc('excluir_despesa' as never, {
+    p_despesa_id: args.id,
+    p_motivo: args.motivo,
+  } as never)
+  return { error: error?.message ?? null }
+}
+
+export async function rpcExcluirRecebimento(args: { id: string; motivo: string }) {
+  const { error } = await supabase.rpc('excluir_recebimento' as never, {
+    p_recebimento_id: args.id,
+    p_motivo: args.motivo,
+  } as never)
+  return { error: error?.message ?? null }
+}
+
 export type PromissoriaAberta = Database['public']['Views']['vw_promissorias_em_aberto']['Row']
 
 export async function listarPromissoriasAbertasDoCliente(clienteId: string): Promise<PromissoriaAberta[]> {
