@@ -20,6 +20,7 @@ export function AppLayout() {
               <NavItem to="/admin" label="Dashboard" />
               <NavItem to="/admin/promissorias" label="Promissórias" />
               <NavItem to="/admin/clientes" label="Clientes" />
+              <NavItem to="/admin/fechamentos" label="Fechamentos" />
               <NavItem to="/admin/relatorios" label="Relatórios" />
             </>
           )}

@@ -8,6 +8,7 @@ import Caixa from '@/pages/caixa/Caixa'
 import Dashboard from '@/pages/admin/Dashboard'
 import Clientes from '@/pages/admin/Clientes'
 import Promissorias from '@/pages/admin/Promissorias'
+import Fechamentos from '@/pages/admin/Fechamentos'
 import Relatorios from '@/pages/admin/Relatorios'
 import NotFound from '@/pages/NotFound'
 import Forbidden from '@/pages/Forbidden'
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/admin" element={<Dashboard />} />
             <Route path="/admin/clientes" element={<Clientes />} />
             <Route path="/admin/promissorias" element={<Promissorias />} />
+            <Route path="/admin/fechamentos" element={<Fechamentos />} />
             <Route path="/admin/relatorios" element={<Relatorios />} />
           </Route>
         </Route>

@@ -14,10 +14,18 @@ interface Props {
   onKeyDown?: (e: React.KeyboardEvent) => void
 }
 
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+}
+
 export function ClienteCombobox({ value, onChange, autoFocus, onKeyDown }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Cliente[]>([])
   const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!open || query.trim().length < 1) {
@@ -25,14 +33,22 @@ export function ClienteCombobox({ value, onChange, autoFocus, onKeyDown }: Props
       return
     }
     const handle = setTimeout(async () => {
+      setLoading(true)
+      // Busca ampla (até 50) e filtra/normaliza no cliente — evita problema de acento sem unaccent
       const { data } = await supabase
         .from('clientes')
         .select('id, nome, telefone')
-        .ilike('nome', `%${query}%`)
         .is('deleted_at', null)
-        .limit(8)
-      setResults((data ?? []) as Cliente[])
-    }, 250)
+        .order('nome')
+        .limit(200)
+
+      const q = normalize(query.trim())
+      const filtered = ((data ?? []) as Cliente[])
+        .filter((c) => normalize(c.nome).includes(q) || (c.telefone ?? '').includes(query.trim()))
+        .slice(0, 12)
+      setResults(filtered)
+      setLoading(false)
+    }, 200)
     return () => clearTimeout(handle)
   }, [query, open])
 
@@ -43,17 +59,22 @@ export function ClienteCombobox({ value, onChange, autoFocus, onKeyDown }: Props
         autoFocus={autoFocus}
         value={value ? value.nome : query}
         onChange={(e) => {
-          onChange(null)
+          if (value) onChange(null)
           setQuery(e.target.value)
           setOpen(true)
         }}
         onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={onKeyDown}
-        placeholder="Buscar cliente por nome…"
+        placeholder="Buscar cliente por nome ou telefone…"
         className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-ring focus-visible:ring-2"
       />
-      {open && results.length > 0 && !value && (
-        <ul className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-md border bg-popover text-sm shadow-lg">
+      {open && !value && (results.length > 0 || loading || query.trim()) && (
+        <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-popover text-sm shadow-lg">
+          {loading && <li className="px-3 py-2 text-muted-foreground">Buscando…</li>}
+          {!loading && results.length === 0 && query.trim() && (
+            <li className="px-3 py-2 text-muted-foreground">Nenhum cliente encontrado.</li>
+          )}
           {results.map((c) => (
             <li
               key={c.id}
