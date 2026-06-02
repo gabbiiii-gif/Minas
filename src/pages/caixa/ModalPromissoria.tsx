@@ -4,23 +4,29 @@ import { parseUserInput, centsToBRL, MoneyError } from '@/lib/money'
 import { rpcCriarVendaComPromissoria } from '@/lib/rpc'
 import { MoneyInput } from '@/components/shared/MoneyInput'
 import { ClienteCombobox } from '@/components/shared/ClienteCombobox'
+import { useAuthStore } from '@/stores/auth'
 
 interface Cliente { id: string; nome: string; telefone: string | null }
-interface Props { open: boolean; onClose: () => void }
+interface Props { open: boolean; onClose: () => void; defaultDate?: string }
 
-export function ModalPromissoria({ open, onClose }: Props) {
+export function ModalPromissoria({ open, onClose, defaultDate }: Props) {
+  const { profile } = useAuthStore()
+  const isAdmin = profile?.role === 'admin'
+  const hojeStr = new Date().toISOString().slice(0, 10)
   const [raw, setRaw] = useState('')
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [vencimento, setVencimento] = useState('')
   const [obs, setObs] = useState('')
+  const [dataLanc, setDataLanc] = useState(defaultDate ?? hojeStr)
   const [submitting, setSubmitting] = useState(false)
   const valorRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (open) {
       setRaw(''); setCliente(null); setVencimento(''); setObs('')
+      setDataLanc(defaultDate ?? hojeStr)
     }
-  }, [open])
+  }, [open, hojeStr, defaultDate])
 
   async function submit() {
     if (!cliente) {
@@ -39,6 +45,7 @@ export function ModalPromissoria({ open, onClose }: Props) {
       cliente_id: cliente.id,
       vencimento: vencimento || null,
       observacao: obs.trim() || null,
+      ...(isAdmin && dataLanc !== hojeStr ? { data: dataLanc } : {}),
     })
     setSubmitting(false)
     if (error) {
@@ -46,7 +53,6 @@ export function ModalPromissoria({ open, onClose }: Props) {
       return
     }
     toast.success(`Promissória ${centsToBRL(cents)} criada para ${cliente.nome}`)
-    // Tenta imprimir
     void window.api?.printer.printPromissoria({
       cliente: cliente.nome,
       telefone: cliente.telefone,
@@ -96,6 +102,31 @@ export function ModalPromissoria({ open, onClose }: Props) {
           maxLength={200}
           className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-ring focus-visible:ring-2"
         />
+
+        {isAdmin && (
+          <>
+            <label className="mb-1 mt-4 block text-sm font-medium">
+              Data do lançamento{' '}
+              {dataLanc !== hojeStr && (
+                <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-800">
+                  retroativo
+                </span>
+              )}
+            </label>
+            <input
+              type="date"
+              value={dataLanc}
+              onChange={(e) => setDataLanc(e.target.value)}
+              onKeyDown={onKey}
+              disabled={submitting}
+              max={hojeStr}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-ring focus-visible:ring-2"
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Só admin. Caixa do dia precisa estar aberto/reaberto.
+            </p>
+          </>
+        )}
 
         <div className="mt-5 flex justify-end gap-2">
           <button onClick={onClose} disabled={submitting} className="rounded-md border px-3 py-2 text-sm hover:bg-muted">

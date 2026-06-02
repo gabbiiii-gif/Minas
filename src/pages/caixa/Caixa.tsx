@@ -20,16 +20,19 @@ type ModalAberto = 'venda' | 'promissoria' | 'receber' | 'despesa' | 'fechamento
 
 export default function Caixa() {
   const { user, profile } = useAuthStore()
+  const isAdmin = profile?.role === 'admin'
   const hoje = useMemo(() => hojeBelem(), [])
+  const [activeDate, setActiveDate] = useState(hoje)
+  const [statusActiveDate, setStatusActiveDate] = useState<'aberto' | 'fechado' | null>(null)
   const [modal, setModal] = useState<ModalAberto>(null)
   const [formaVenda, setFormaVenda] = useState<FormaDireta | null>(null)
 
   const vendasQuery = useRealtimeTable<Venda>({
     table: 'vendas',
-    filter: { column: 'data', value: hoje },
+    filter: { column: 'data', value: activeDate },
     initialQuery: async () => {
       const { data, error } = await supabase
-        .from('vendas').select('*').eq('data', hoje).is('deleted_at', null)
+        .from('vendas').select('*').eq('data', activeDate).is('deleted_at', null)
         .order('created_at', { ascending: false })
       if (error) throw error
       return data ?? []
@@ -40,10 +43,10 @@ export default function Caixa() {
 
   const recebimentosQuery = useRealtimeTable<Recebimento>({
     table: 'recebimentos_promissoria',
-    filter: { column: 'data', value: hoje },
+    filter: { column: 'data', value: activeDate },
     initialQuery: async () => {
       const { data, error } = await supabase
-        .from('recebimentos_promissoria').select('*').eq('data', hoje)
+        .from('recebimentos_promissoria').select('*').eq('data', activeDate)
         .order('created_at', { ascending: false })
       if (error) throw error
       return data ?? []
@@ -54,10 +57,10 @@ export default function Caixa() {
 
   const despesasQuery = useRealtimeTable<Despesa>({
     table: 'despesas',
-    filter: { column: 'data', value: hoje },
+    filter: { column: 'data', value: activeDate },
     initialQuery: async () => {
       const { data, error } = await supabase
-        .from('despesas').select('*').eq('data', hoje).is('deleted_at', null)
+        .from('despesas').select('*').eq('data', activeDate).is('deleted_at', null)
         .order('created_at', { ascending: false })
       if (error) throw error
       return data ?? []
@@ -66,11 +69,7 @@ export default function Caixa() {
     orderDesc: true,
   })
 
-  const {
-    setVendas, setRecebimentos, setDespesas,
-    totaisVendas, totaisRecebimentos, totalDespesas,
-    setFechado, fechado,
-  } = useCaixaStore()
+  const { setVendas, setRecebimentos, setDespesas, totaisVendas, totaisRecebimentos, totalDespesas } = useCaixaStore()
 
   useEffect(() => { setVendas(vendasQuery.rows) }, [vendasQuery.rows, setVendas])
   useEffect(() => { setRecebimentos(recebimentosQuery.rows) }, [recebimentosQuery.rows, setRecebimentos])
@@ -78,13 +77,27 @@ export default function Caixa() {
 
   useEffect(() => {
     if (!user) return
+    setStatusActiveDate(null)
     void (async () => {
-      const { data } = await supabase
-        .from('fechamentos_caixa').select('status')
-        .eq('data', hoje).eq('operador_id', user.id).maybeSingle()
-      if (data?.status === 'fechado') setFechado(true)
+      const baseQ = supabase
+        .from('fechamentos_caixa')
+        .select('status')
+        .eq('data', activeDate)
+      const finalQ = activeDate === hoje
+        ? baseQ.eq('operador_id', user.id)
+        : baseQ
+      const { data } = await finalQ
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      setStatusActiveDate((data?.status as 'aberto' | 'fechado') ?? 'aberto')
     })()
-  }, [user, hoje, setFechado])
+  }, [user, activeDate, hoje])
+
+  const fechado = statusActiveDate === 'fechado'
+  const loadingStatus = statusActiveDate === null
+  const isPastReaberto = activeDate !== hoje && statusActiveDate === 'aberto'
+  const canEdit = !loadingStatus && !fechado
 
   function openVenda(f: FormaDireta) { setFormaVenda(f); setModal('venda') }
 
@@ -97,9 +110,9 @@ export default function Caixa() {
       F5: () => setModal('promissoria'),
       F8: () => setModal('despesa'),
       F9: () => setModal('receber'),
-      F12: () => setModal('fechamento'),
+      F12: () => { if (activeDate === hoje) setModal('fechamento') },
     },
-    { enabled: !fechado && modal === null },
+    { enabled: canEdit && modal === null },
   )
 
   const linhas = mergeLinhas(vendasQuery.rows, recebimentosQuery.rows, despesasQuery.rows)
@@ -138,14 +151,43 @@ export default function Caixa() {
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-between border-b px-6 py-3">
         <div>
-          <h1 className="text-xl font-bold">Caixa — {hoje}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold">Caixa —</h1>
+            {isAdmin ? (
+              <>
+                <input
+                  type="date"
+                  value={activeDate}
+                  max={hoje}
+                  onChange={(e) => setActiveDate(e.target.value || hoje)}
+                  className="rounded border bg-background px-2 py-1 font-mono text-base font-bold outline-none ring-ring focus-visible:ring-2"
+                />
+                {activeDate !== hoje && (
+                  <button
+                    onClick={() => setActiveDate(hoje)}
+                    className="text-xs text-muted-foreground underline"
+                  >
+                    hoje
+                  </button>
+                )}
+              </>
+            ) : (
+              <span className="text-xl font-bold">{hoje}</span>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground">
             Operador: {profile?.nome} ({profile?.role})
           </p>
         </div>
-        {fechado ? (
+        {loadingStatus ? (
+          <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold text-muted-foreground">…</span>
+        ) : fechado ? (
           <span className="rounded-full bg-destructive px-3 py-1 text-xs font-bold text-destructive-foreground">
             CAIXA FECHADO
+          </span>
+        ) : isPastReaberto ? (
+          <span className="rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white">
+            REABERTO
           </span>
         ) : (
           <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white">
@@ -163,7 +205,7 @@ export default function Caixa() {
                 <button
                   key={f}
                   onClick={() => openVenda(f)}
-                  disabled={fechado}
+                  disabled={!canEdit}
                   className="flex h-20 flex-col items-center justify-center rounded-lg border bg-card text-sm font-medium hover:bg-muted disabled:opacity-50"
                 >
                   <kbd className="mb-1">F{i + 1}</kbd>
@@ -172,16 +214,20 @@ export default function Caixa() {
               ))}
             </div>
             <div className="mt-3 grid grid-cols-4 gap-3">
-              <button onClick={() => setModal('promissoria')} disabled={fechado} className="flex h-14 flex-col items-center justify-center rounded-lg border bg-amber-50 text-xs font-medium hover:bg-amber-100 disabled:opacity-50">
+              <button onClick={() => setModal('promissoria')} disabled={!canEdit} className="flex h-14 flex-col items-center justify-center rounded-lg border bg-amber-50 text-xs font-medium hover:bg-amber-100 disabled:opacity-50">
                 <kbd>F5</kbd><span>Promissória</span>
               </button>
-              <button onClick={() => setModal('despesa')} disabled={fechado} className="flex h-14 flex-col items-center justify-center rounded-lg border bg-red-50 text-xs font-medium hover:bg-red-100 disabled:opacity-50">
+              <button onClick={() => setModal('despesa')} disabled={!canEdit} className="flex h-14 flex-col items-center justify-center rounded-lg border bg-red-50 text-xs font-medium hover:bg-red-100 disabled:opacity-50">
                 <kbd>F8</kbd><span>Despesa</span>
               </button>
-              <button onClick={() => setModal('receber')} disabled={fechado} className="flex h-14 flex-col items-center justify-center rounded-lg border bg-teal-50 text-xs font-medium hover:bg-teal-100 disabled:opacity-50">
+              <button onClick={() => setModal('receber')} disabled={!canEdit} className="flex h-14 flex-col items-center justify-center rounded-lg border bg-teal-50 text-xs font-medium hover:bg-teal-100 disabled:opacity-50">
                 <kbd>F9</kbd><span>Receber</span>
               </button>
-              <button onClick={() => setModal('fechamento')} disabled={fechado} className="flex h-14 flex-col items-center justify-center rounded-lg border bg-slate-100 text-xs font-medium hover:bg-slate-200 disabled:opacity-50">
+              <button
+                onClick={() => setModal('fechamento')}
+                disabled={!canEdit || activeDate !== hoje}
+                className="flex h-14 flex-col items-center justify-center rounded-lg border bg-slate-100 text-xs font-medium hover:bg-slate-200 disabled:opacity-50"
+              >
                 <kbd>F12</kbd><span>Fechar</span>
               </button>
             </div>
@@ -196,7 +242,8 @@ export default function Caixa() {
             )}
             {!vendasQuery.loading && linhas.length === 0 && (
               <li className="p-6 text-center text-sm text-muted-foreground">
-                Sem lançamentos hoje. Pressione F1-F4 pra começar.
+                Sem lançamentos {activeDate === hoje ? 'hoje' : `em ${activeDate}`}.
+                {canEdit && ' Pressione F1-F4 pra começar.'}
               </li>
             )}
             {linhas.map((l) => (
@@ -212,7 +259,7 @@ export default function Caixa() {
                   <div className={cn('font-mono font-semibold', l.tag === 'DESPESA' && 'text-destructive')}>
                     {l.tag === 'DESPESA' ? '-' : ''}{centsToBRL(l.valor)}
                   </div>
-                  {!fechado && l.tag !== 'PROMISSORIA' && (
+                  {canEdit && l.tag !== 'PROMISSORIA' && (
                     <button
                       onClick={() => excluirLinha(l)}
                       title="Excluir (com motivo)"
@@ -250,11 +297,19 @@ export default function Caixa() {
         </aside>
       </div>
 
-      <ModalVenda forma={modal === 'venda' ? formaVenda : null} onClose={() => { setModal(null); setFormaVenda(null) }} />
-      <ModalPromissoria open={modal === 'promissoria'} onClose={() => setModal(null)} />
-      <ModalReceberPromissoria open={modal === 'receber'} onClose={() => setModal(null)} />
-      <ModalDespesa open={modal === 'despesa'} onClose={() => setModal(null)} />
-      <ModalFechamento open={modal === 'fechamento'} onClose={() => setModal(null)} onFechado={() => setFechado(true)} />
+      <ModalVenda
+        forma={modal === 'venda' ? formaVenda : null}
+        onClose={() => { setModal(null); setFormaVenda(null) }}
+        defaultDate={activeDate}
+      />
+      <ModalPromissoria open={modal === 'promissoria'} onClose={() => setModal(null)} defaultDate={activeDate} />
+      <ModalReceberPromissoria open={modal === 'receber'} onClose={() => setModal(null)} defaultDate={activeDate} />
+      <ModalDespesa open={modal === 'despesa'} onClose={() => setModal(null)} defaultDate={activeDate} />
+      <ModalFechamento
+        open={modal === 'fechamento'}
+        onClose={() => setModal(null)}
+        onFechado={() => setStatusActiveDate('fechado')}
+      />
     </div>
   )
 }

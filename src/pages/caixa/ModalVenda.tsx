@@ -11,6 +11,7 @@ type FormaDireta = 'dinheiro' | 'pix' | 'debito' | 'credito'
 interface Props {
   forma: FormaDireta | null
   onClose: () => void
+  defaultDate?: string
 }
 
 const LABELS: Record<FormaDireta, string> = {
@@ -20,10 +21,13 @@ const LABELS: Record<FormaDireta, string> = {
   credito: 'Crédito (F4)',
 }
 
-export function ModalVenda({ forma, onClose }: Props) {
-  const { user } = useAuthStore()
+export function ModalVenda({ forma, onClose, defaultDate }: Props) {
+  const { user, profile } = useAuthStore()
+  const isAdmin = profile?.role === 'admin'
+  const hojeStr = new Date().toISOString().slice(0, 10)
   const [raw, setRaw] = useState('')
   const [obs, setObs] = useState('')
+  const [dataLanc, setDataLanc] = useState(defaultDate ?? hojeStr)
   const [submitting, setSubmitting] = useState(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
@@ -31,9 +35,10 @@ export function ModalVenda({ forma, onClose }: Props) {
     if (forma) {
       setRaw('')
       setObs('')
+      setDataLanc(defaultDate ?? hojeStr)
       setTimeout(() => inputRef.current?.focus(), 30)
     }
-  }, [forma])
+  }, [forma, hojeStr, defaultDate])
 
   async function submit() {
     if (!forma || !user) return
@@ -52,6 +57,7 @@ export function ModalVenda({ forma, onClose }: Props) {
       forma_pagamento: forma,
       operador_id: user.id,
       observacao: obs.trim() ? obs.trim() : null,
+      ...(isAdmin && dataLanc && dataLanc !== hojeStr ? { data: dataLanc } : {}),
     }
     const { error } = await supabase.from('vendas').insert(payload)
     setSubmitting(false)
@@ -108,6 +114,25 @@ export function ModalVenda({ forma, onClose }: Props) {
           disabled={submitting}
           className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-ring focus-visible:ring-2"
         />
+        {isAdmin && (
+          <>
+            <label className="mb-1 mt-4 block text-sm font-medium">
+              Data do lançamento {dataLanc !== hojeStr && <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-800">retroativo</span>}
+            </label>
+            <input
+              type="date"
+              value={dataLanc}
+              onChange={(e) => setDataLanc(e.target.value)}
+              onKeyDown={onKey}
+              disabled={submitting}
+              max={hojeStr}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-ring focus-visible:ring-2"
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Só admin. Caixa do dia precisa estar aberto/reaberto.
+            </p>
+          </>
+        )}
         <div className="mt-5 flex justify-end gap-2">
           <button
             onClick={onClose}
