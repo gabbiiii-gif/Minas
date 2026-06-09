@@ -98,6 +98,8 @@ export default function Caixa() {
   const loadingStatus = statusActiveDate === null
   const isPastReaberto = activeDate !== hoje && statusActiveDate === 'aberto'
   const canEdit = !loadingStatus && !fechado
+  // Hoje: qualquer operador fecha. Dia passado (reaberto): só admin.
+  const canFechar = canEdit && (activeDate === hoje || isAdmin)
 
   function openVenda(f: FormaDireta) { setFormaVenda(f); setModal('venda') }
 
@@ -110,7 +112,7 @@ export default function Caixa() {
       F5: () => setModal('promissoria'),
       F8: () => setModal('despesa'),
       F9: () => setModal('receber'),
-      F12: () => { if (activeDate === hoje) setModal('fechamento') },
+      F12: () => { if (canFechar) setModal('fechamento') },
     },
     { enabled: canEdit && modal === null },
   )
@@ -225,7 +227,8 @@ export default function Caixa() {
               </button>
               <button
                 onClick={() => setModal('fechamento')}
-                disabled={!canEdit || activeDate !== hoje}
+                disabled={!canFechar}
+                title={activeDate !== hoje && !isAdmin ? 'Só admin fecha dia anterior' : undefined}
                 className="flex h-14 flex-col items-center justify-center rounded-lg border bg-slate-100 text-xs font-medium hover:bg-slate-200 disabled:opacity-50"
               >
                 <kbd>F12</kbd><span>Fechar</span>
@@ -307,6 +310,7 @@ export default function Caixa() {
       <ModalDespesa open={modal === 'despesa'} onClose={() => setModal(null)} defaultDate={activeDate} />
       <ModalFechamento
         open={modal === 'fechamento'}
+        data={activeDate}
         onClose={() => setModal(null)}
         onFechado={() => setStatusActiveDate('fechado')}
       />

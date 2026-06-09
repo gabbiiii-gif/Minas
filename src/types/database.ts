@@ -167,6 +167,7 @@ export type Database = {
         Row: {
           created_at: string
           data: string
+          desconto: number
           forma_pagamento: Database['public']['Enums']['forma_pagamento']
           id: string
           operador_id: string
@@ -177,6 +178,7 @@ export type Database = {
         Insert: {
           created_at?: string
           data?: string
+          desconto?: number
           forma_pagamento: Database['public']['Enums']['forma_pagamento']
           id?: string
           operador_id: string

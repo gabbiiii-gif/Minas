@@ -6,13 +6,15 @@ export async function rpcCriarVendaComPromissoria(args: {
   cliente_id: string
   vencimento: string | null
   observacao: string | null
+  data?: string
 }): Promise<{ id: string | null; error: string | null }> {
   const { data, error } = await supabase.rpc('criar_venda_com_promissoria', {
     p_valor: args.valor,
     p_cliente_id: args.cliente_id,
     p_vencimento: args.vencimento,
     p_observacao: args.observacao,
-  })
+    ...(args.data ? { p_data: args.data } : {}),
+  } as never)
   return { id: (data as string | null) ?? null, error: error?.message ?? null }
 }
 
@@ -27,6 +29,28 @@ export async function rpcReceberPromissoria(args: {
     p_forma: args.forma,
   })
   return { id: (data as string | null) ?? null, error: error?.message ?? null }
+}
+
+export interface ItemRecebimentoLote {
+  promissoria_id: string
+  /** dinheiro/pix/etc que entra no caixa (centavos, > 0) */
+  valor: number
+  /** abatimento concedido (centavos, >= 0) */
+  desconto: number
+}
+
+/** Recebe uma ou várias promissórias num único lançamento (forma + data únicas). */
+export async function rpcReceberPromissoriasLote(args: {
+  itens: ItemRecebimentoLote[]
+  forma: Exclude<FormaPagamento, 'promissoria'>
+  data?: string
+}): Promise<{ count: number | null; error: string | null }> {
+  const { data, error } = await supabase.rpc('receber_promissorias_lote' as never, {
+    p_itens: args.itens,
+    p_forma: args.forma,
+    ...(args.data ? { p_data: args.data } : {}),
+  } as never)
+  return { count: (data as number | null) ?? null, error: error?.message ?? null }
 }
 
 export interface FechamentoTotais {

@@ -3,14 +3,16 @@ import { cn } from '@/lib/utils'
 
 interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
   valueCents?: number
+  /** Texto inicial (ex.: "640,85"). Use junto com `key` p/ re-semear ao trocar de contexto. */
+  defaultValueText?: string
   onValueChange?: (rawText: string) => void
 }
 
 export const MoneyInput = forwardRef<HTMLInputElement, Props>(function MoneyInput(
-  { valueCents, onValueChange, className, ...rest },
+  { valueCents, defaultValueText, onValueChange, className, ...rest },
   ref,
 ) {
-  const [local, setLocal] = useState('')
+  const [local, setLocal] = useState(defaultValueText ?? '')
   return (
     <input
       ref={ref}
