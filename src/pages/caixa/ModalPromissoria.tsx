@@ -4,6 +4,7 @@ import { parseUserInput, centsToBRL, MoneyError } from '@/lib/money'
 import { rpcCriarVendaComPromissoria } from '@/lib/rpc'
 import { MoneyInput } from '@/components/shared/MoneyInput'
 import { ClienteCombobox } from '@/components/shared/ClienteCombobox'
+import { ModalShell } from '@/components/shared/ModalShell'
 import { hojeBelem } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 
@@ -72,10 +73,9 @@ export function ModalPromissoria({ open, onClose, defaultDate }: Props) {
     else if (e.key === 'Escape') { e.preventDefault(); onClose() }
   }
 
-  if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <ModalShell open={open} onClose={onClose} className="w-full max-w-md rounded-2xl p-6">
+        <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
         <h2 className="mb-1 text-xl font-bold">Nova Promissória (F5)</h2>
         <p className="mb-4 text-xs text-muted-foreground">Cliente + valor + vencimento opcional.</p>
 
@@ -137,7 +137,6 @@ export function ModalPromissoria({ open, onClose, defaultDate }: Props) {
             {submitting ? 'Salvando…' : 'ENTER — Salvar + Imprimir'}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   )
 }

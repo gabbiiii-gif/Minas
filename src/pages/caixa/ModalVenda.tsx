@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { hojeBelem } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 import { MoneyInput } from '@/components/shared/MoneyInput'
+import { ModalShell } from '@/components/shared/ModalShell'
 import type { Database } from '@/types/database'
 
 type FormaDireta = 'dinheiro' | 'pix' | 'debito' | 'credito'
@@ -85,14 +86,11 @@ export function ModalVenda({ forma, onClose, defaultDate }: Props) {
     }
   }
 
-  if (!forma) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div
-        className="w-full max-w-md rounded-lg border bg-card p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalShell open={!!forma} onClose={onClose} className="w-full max-w-md rounded-2xl p-6">
+      {forma && (
+        <>
+        <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
         <h2 className="mb-1 text-xl font-bold">Venda — {LABELS[forma]}</h2>
         <p className="mb-4 text-xs text-muted-foreground">
           Digite o valor e pressione ENTER. ESC cancela.
@@ -150,7 +148,8 @@ export function ModalVenda({ forma, onClose, defaultDate }: Props) {
             {submitting ? 'Salvando…' : 'ENTER — Salvar'}
           </button>
         </div>
-      </div>
-    </div>
+        </>
+      )}
+    </ModalShell>
   )
 }

@@ -9,6 +9,7 @@ import {
 } from '@/lib/rpc'
 import { ClienteCombobox } from '@/components/shared/ClienteCombobox'
 import { MoneyInput } from '@/components/shared/MoneyInput'
+import { ModalShell } from '@/components/shared/ModalShell'
 import { hojeBelem } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 import { cn } from '@/lib/utils'
@@ -165,10 +166,9 @@ export function ModalReceberPromissoria({ open, onClose, defaultDate }: Props) {
     else if (e.key === 'Escape') { e.preventDefault(); onClose() }
   }
 
-  if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="max-h-[92vh] w-full max-w-lg overflow-auto rounded-lg border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <ModalShell open={open} onClose={onClose} className="max-h-[92vh] w-full max-w-lg overflow-auto rounded-2xl p-6">
+        <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
         <h2 className="mb-1 text-xl font-bold">Receber Promissória (F9)</h2>
         <p className="mb-4 text-xs text-muted-foreground">
           Marque uma ou várias notas. Recebimento NÃO conta como receita nova.
@@ -345,8 +345,7 @@ export function ModalReceberPromissoria({ open, onClose, defaultDate }: Props) {
             {submitting ? 'Salvando…' : 'ENTER — Receber'}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   )
 }
 

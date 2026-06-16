@@ -5,6 +5,7 @@ import { rpcFecharCaixa } from '@/lib/rpc'
 import { useCaixaStore } from '@/stores/caixa'
 import { hojeBelem } from '@/lib/date'
 import { cn } from '@/lib/utils'
+import { ModalShell } from '@/components/shared/ModalShell'
 
 interface Props { open: boolean; onClose: () => void; onFechado: () => void; data?: string }
 type Campo = 'dinheiro' | 'pix' | 'debito' | 'credito'
@@ -81,11 +82,9 @@ export function ModalFechamento({ open, onClose, onFechado, data }: Props) {
     return (val: string) => setFisicoRaw((c) => ({ ...c, [campo]: val }))
   }
 
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-3xl rounded-lg border bg-card p-6 shadow-2xl">
+    <ModalShell open={open} onClose={() => {}} className="w-full max-w-3xl rounded-2xl p-6">
+        <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
         <h2 className="mb-1 text-xl font-bold">Fechamento de Caixa (F12)</h2>
         <p className="mb-5 text-xs text-muted-foreground">
           Fechando <span className="font-mono font-semibold">{dataFechamento}</span>. Confira: o que o
@@ -165,7 +164,6 @@ export function ModalFechamento({ open, onClose, onFechado, data }: Props) {
             {submitting ? 'Fechando…' : 'Fechar caixa'}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   )
 }

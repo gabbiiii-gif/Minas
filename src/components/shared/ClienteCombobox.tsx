@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'motion/react'
 import { supabase } from '@/lib/supabase'
 
 interface Cliente {
@@ -70,7 +71,12 @@ export function ClienteCombobox({ value, onChange, autoFocus, onKeyDown }: Props
         className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-ring focus-visible:ring-2"
       />
       {open && !value && (results.length > 0 || loading || query.trim()) && (
-        <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-popover text-sm shadow-lg">
+        <motion.ul
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.15 }}
+          className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-lg border bg-popover text-sm shadow-xl"
+        >
           {loading && <li className="px-3 py-2 text-muted-foreground">Buscando…</li>}
           {!loading && results.length === 0 && query.trim() && (
             <li className="px-3 py-2 text-muted-foreground">Nenhum cliente encontrado.</li>
@@ -90,7 +96,7 @@ export function ClienteCombobox({ value, onChange, autoFocus, onKeyDown }: Props
               {c.telefone && <div className="text-xs text-muted-foreground">{c.telefone}</div>}
             </li>
           ))}
-        </ul>
+        </motion.ul>
       )}
     </div>
   )
