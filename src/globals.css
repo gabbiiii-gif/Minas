@@ -4,25 +4,28 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    /* Tema "Premium Automotivo" — interior claro, marca âmbar + grafite */
+    --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221 83% 53%;
+    /* Ação principal = grafite forte */
+    --primary: 222 47% 11%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Acento de marca = âmbar */
+    --accent: 38 92% 50%;
+    --accent-foreground: 26 83% 14%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
+    --ring: 38 92% 50%;
     --radius: 0.5rem;
   }
 
@@ -78,4 +81,56 @@
     background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover { background-color: hsl(var(--muted-foreground) / 0.5); }
+
+  /* Card de vidro escuro (login) */
+  .glass {
+    background: rgba(17, 19, 26, 0.55);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid rgba(245, 158, 11, 0.18);
+    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.7);
+  }
+  .glass-input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #f8fafc;
+  }
+  .glass-input::placeholder { color: rgba(248, 250, 252, 0.5); }
+  .glass-input:focus-visible {
+    outline: none;
+    border-color: hsl(38 92% 55%);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+  }
+
+  /* Aurora animada (login) — também serve de fundo offline */
+  .aurora {
+    background:
+      radial-gradient(40% 50% at 20% 30%, rgba(245, 158, 11, 0.30), transparent 60%),
+      radial-gradient(45% 55% at 80% 25%, rgba(239, 68, 68, 0.22), transparent 60%),
+      radial-gradient(50% 60% at 60% 80%, rgba(120, 53, 15, 0.35), transparent 60%);
+    background-size: 200% 200%;
+    animation: aurora 18s ease-in-out infinite;
+  }
+  @keyframes aurora {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Spotlight (card com luz seguindo o mouse) */
+  .spotlight-card { position: relative; overflow: hidden; }
+  .spotlight-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 50%), rgba(245, 158, 11, 0.16), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .spotlight-card:hover::before { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurora { animation: none; }
+    * { scroll-behavior: auto !important; }
+  }
 }
