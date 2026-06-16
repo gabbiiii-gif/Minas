@@ -17,3 +17,5 @@ test-results/
 .cache/
 .vercel/
 *.tsbuildinfo
+.superpowers/
+tmp_*.css
