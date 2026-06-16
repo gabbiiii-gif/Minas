@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { parseUserInput, centsToBRL, MoneyError } from '@/lib/money'
 import { supabase } from '@/lib/supabase'
+import { hojeBelem } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 import { MoneyInput } from '@/components/shared/MoneyInput'
 import type { Database } from '@/types/database'
@@ -24,7 +25,7 @@ const LABELS: Record<FormaDireta, string> = {
 export function ModalVenda({ forma, onClose, defaultDate }: Props) {
   const { user, profile } = useAuthStore()
   const isAdmin = profile?.role === 'admin'
-  const hojeStr = new Date().toISOString().slice(0, 10)
+  const hojeStr = hojeBelem()
   const [raw, setRaw] = useState('')
   const [obs, setObs] = useState('')
   const [dataLanc, setDataLanc] = useState(defaultDate ?? hojeStr)

@@ -9,6 +9,7 @@ import {
 } from '@/lib/rpc'
 import { ClienteCombobox } from '@/components/shared/ClienteCombobox'
 import { MoneyInput } from '@/components/shared/MoneyInput'
+import { hojeBelem } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 import { cn } from '@/lib/utils'
 
@@ -26,7 +27,7 @@ function parseOpcional(raw: string): number {
 export function ModalReceberPromissoria({ open, onClose, defaultDate }: Props) {
   const { profile } = useAuthStore()
   const isAdmin = profile?.role === 'admin'
-  const hojeStr = new Date().toISOString().slice(0, 10)
+  const hojeStr = hojeBelem()
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [promissorias, setPromissorias] = useState<PromissoriaAberta[]>([])
   const [selecionadas, setSelecionadas] = useState<string[]>([])

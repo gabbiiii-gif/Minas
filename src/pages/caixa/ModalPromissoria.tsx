@@ -4,6 +4,7 @@ import { parseUserInput, centsToBRL, MoneyError } from '@/lib/money'
 import { rpcCriarVendaComPromissoria } from '@/lib/rpc'
 import { MoneyInput } from '@/components/shared/MoneyInput'
 import { ClienteCombobox } from '@/components/shared/ClienteCombobox'
+import { hojeBelem } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 
 interface Cliente { id: string; nome: string; telefone: string | null }
@@ -12,7 +13,7 @@ interface Props { open: boolean; onClose: () => void; defaultDate?: string }
 export function ModalPromissoria({ open, onClose, defaultDate }: Props) {
   const { profile } = useAuthStore()
   const isAdmin = profile?.role === 'admin'
-  const hojeStr = new Date().toISOString().slice(0, 10)
+  const hojeStr = hojeBelem()
   const [raw, setRaw] = useState('')
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [vencimento, setVencimento] = useState('')

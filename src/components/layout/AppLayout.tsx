@@ -8,8 +8,11 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen w-screen">
-      <aside className="flex w-56 flex-col border-r bg-card">
-        <Link to="/" className="px-4 py-4 text-lg font-bold tracking-tight">
+      <aside className="flex w-56 flex-col border-r bg-card shadow-sm">
+        <Link to="/" className="flex items-center gap-2 px-4 py-4 text-lg font-bold tracking-tight">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm font-black text-primary-foreground shadow-sm">
+            M
+          </span>
           MinasCaixa
         </Link>
         <nav className="flex-1 space-y-1 px-2 text-sm">
@@ -36,7 +39,7 @@ export function AppLayout() {
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto bg-muted/30">
         <Outlet />
       </main>
     </div>

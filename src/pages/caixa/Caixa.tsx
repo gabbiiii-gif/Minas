@@ -18,6 +18,13 @@ import { cn } from '@/lib/utils'
 type FormaDireta = 'dinheiro' | 'pix' | 'debito' | 'credito'
 type ModalAberto = 'venda' | 'promissoria' | 'receber' | 'despesa' | 'fechamento' | null
 
+const FORMA_BTN: Record<FormaDireta, string> = {
+  dinheiro: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
+  pix: 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100',
+  debito: 'border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100',
+  credito: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100',
+}
+
 export default function Caixa() {
   const { user, profile } = useAuthStore()
   const isAdmin = profile?.role === 'admin'
@@ -150,8 +157,8 @@ export default function Caixa() {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="flex items-center justify-between border-b px-6 py-3">
+    <div className="flex h-full flex-col bg-background">
+      <header className="flex items-center justify-between border-b bg-card px-6 py-3 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold">Caixa —</h1>
@@ -188,8 +195,8 @@ export default function Caixa() {
             CAIXA FECHADO
           </span>
         ) : isPastReaberto ? (
-          <span className="rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white">
-            REABERTO
+          <span className="rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white shadow-sm">
+            RETROATIVO
           </span>
         ) : (
           <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white">
@@ -197,6 +204,18 @@ export default function Caixa() {
           </span>
         )}
       </header>
+
+      {isAdmin && activeDate !== hoje && !fechado && (
+        <div className="flex items-center gap-2 border-b bg-amber-50 px-6 py-2 text-xs text-amber-900">
+          <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
+            retroativo
+          </span>
+          <span>
+            Lançando no dia <strong className="font-mono">{activeDate}</strong> (dados do papel).
+            Use F1–F9 normalmente e feche com F12 ao terminar. Clique em <em>hoje</em> pra voltar.
+          </span>
+        </div>
+      )}
 
       <div className="grid flex-1 grid-cols-[1fr_320px] overflow-hidden">
         <section className="flex flex-col overflow-hidden border-r">
@@ -208,7 +227,10 @@ export default function Caixa() {
                   key={f}
                   onClick={() => openVenda(f)}
                   disabled={!canEdit}
-                  className="flex h-20 flex-col items-center justify-center rounded-lg border bg-card text-sm font-medium hover:bg-muted disabled:opacity-50"
+                  className={cn(
+                    'flex h-20 flex-col items-center justify-center rounded-xl border text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none',
+                    FORMA_BTN[f],
+                  )}
                 >
                   <kbd className="mb-1">F{i + 1}</kbd>
                   <span className="capitalize">{f}</span>
@@ -216,20 +238,20 @@ export default function Caixa() {
               ))}
             </div>
             <div className="mt-3 grid grid-cols-4 gap-3">
-              <button onClick={() => setModal('promissoria')} disabled={!canEdit} className="flex h-14 flex-col items-center justify-center rounded-lg border bg-amber-50 text-xs font-medium hover:bg-amber-100 disabled:opacity-50">
+              <button onClick={() => setModal('promissoria')} disabled={!canEdit} className="flex h-14 flex-col items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-xs font-semibold text-amber-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-amber-100 hover:shadow-md disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none">
                 <kbd>F5</kbd><span>Promissória</span>
               </button>
-              <button onClick={() => setModal('despesa')} disabled={!canEdit} className="flex h-14 flex-col items-center justify-center rounded-lg border bg-red-50 text-xs font-medium hover:bg-red-100 disabled:opacity-50">
+              <button onClick={() => setModal('despesa')} disabled={!canEdit} className="flex h-14 flex-col items-center justify-center rounded-xl border border-red-200 bg-red-50 text-xs font-semibold text-red-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-red-100 hover:shadow-md disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none">
                 <kbd>F8</kbd><span>Despesa</span>
               </button>
-              <button onClick={() => setModal('receber')} disabled={!canEdit} className="flex h-14 flex-col items-center justify-center rounded-lg border bg-teal-50 text-xs font-medium hover:bg-teal-100 disabled:opacity-50">
+              <button onClick={() => setModal('receber')} disabled={!canEdit} className="flex h-14 flex-col items-center justify-center rounded-xl border border-teal-200 bg-teal-50 text-xs font-semibold text-teal-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-teal-100 hover:shadow-md disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none">
                 <kbd>F9</kbd><span>Receber</span>
               </button>
               <button
                 onClick={() => setModal('fechamento')}
                 disabled={!canFechar}
                 title={activeDate !== hoje && !isAdmin ? 'Só admin fecha dia anterior' : undefined}
-                className="flex h-14 flex-col items-center justify-center rounded-lg border bg-slate-100 text-xs font-medium hover:bg-slate-200 disabled:opacity-50"
+                className="flex h-14 flex-col items-center justify-center rounded-xl border border-slate-300 bg-slate-100 text-xs font-semibold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-200 hover:shadow-md disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
               >
                 <kbd>F12</kbd><span>Fechar</span>
               </button>

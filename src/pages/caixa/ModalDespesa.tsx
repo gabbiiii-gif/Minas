@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { parseUserInput, centsToBRL, MoneyError } from '@/lib/money'
 import { supabase } from '@/lib/supabase'
+import { hojeBelem } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 import { MoneyInput } from '@/components/shared/MoneyInput'
 
@@ -10,7 +11,7 @@ interface Props { open: boolean; onClose: () => void; defaultDate?: string }
 export function ModalDespesa({ open, onClose, defaultDate }: Props) {
   const { user, profile } = useAuthStore()
   const isAdmin = profile?.role === 'admin'
-  const hojeStr = new Date().toISOString().slice(0, 10)
+  const hojeStr = hojeBelem()
   const [descricao, setDescricao] = useState('')
   const [raw, setRaw] = useState('')
   const [dataLanc, setDataLanc] = useState(defaultDate ?? hojeStr)
