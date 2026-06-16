@@ -14,6 +14,11 @@ import { ModalReceberPromissoria } from './ModalReceberPromissoria'
 import { ModalDespesa } from './ModalDespesa'
 import { ModalFechamento } from './ModalFechamento'
 import { cn } from '@/lib/utils'
+import { motion } from 'motion/react'
+import { BlurText } from '@/components/reactbits/BlurText'
+import { CountUp } from '@/components/reactbits/CountUp'
+import { SpotlightCard } from '@/components/reactbits/SpotlightCard'
+import { useTilt3d } from '@/lib/motion'
 
 type FormaDireta = 'dinheiro' | 'pix' | 'debito' | 'credito'
 type ModalAberto = 'venda' | 'promissoria' | 'receber' | 'despesa' | 'fechamento' | null
@@ -33,6 +38,7 @@ export default function Caixa() {
   const [statusActiveDate, setStatusActiveDate] = useState<'aberto' | 'fechado' | null>(null)
   const [modal, setModal] = useState<ModalAberto>(null)
   const [formaVenda, setFormaVenda] = useState<FormaDireta | null>(null)
+  const tilt = useTilt3d(10)
 
   const vendasQuery = useRealtimeTable<Venda>({
     table: 'vendas',
@@ -161,7 +167,7 @@ export default function Caixa() {
       <header className="flex items-center justify-between border-b bg-card px-6 py-3 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold">Caixa —</h1>
+            <h1 className="text-xl font-bold"><BlurText text="Caixa —" /></h1>
             {isAdmin ? (
               <>
                 <input
@@ -227,8 +233,11 @@ export default function Caixa() {
                   key={f}
                   onClick={() => openVenda(f)}
                   disabled={!canEdit}
+                  onPointerMove={canEdit ? tilt.onPointerMove : undefined}
+                  onPointerLeave={tilt.onPointerLeave}
+                  style={tilt.style}
                   className={cn(
-                    'flex h-20 flex-col items-center justify-center rounded-xl border text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none',
+                    'spotlight-card flex h-20 flex-col items-center justify-center rounded-xl border text-sm font-semibold shadow-sm hover:shadow-lg disabled:opacity-50 disabled:shadow-none',
                     FORMA_BTN[f],
                   )}
                 >
@@ -272,7 +281,13 @@ export default function Caixa() {
               </li>
             )}
             {linhas.map((l) => (
-              <li key={l.key} className="group flex items-center justify-between px-6 py-2 text-sm hover:bg-muted/30">
+              <motion.li
+                key={l.key}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.25 }}
+                className="group flex items-center justify-between px-6 py-2 text-sm hover:bg-muted/30"
+              >
                 <div className="min-w-0 flex-1">
                   <span className="text-xs text-muted-foreground">{formatTimeBelem(l.created_at)}</span>
                   <span className={cn('ml-3 rounded px-2 py-0.5 text-xs font-bold uppercase', l.tagClass)}>
@@ -294,7 +309,7 @@ export default function Caixa() {
                     </button>
                   )}
                 </div>
-              </li>
+              </motion.li>
             ))}
           </ul>
         </section>
@@ -302,7 +317,9 @@ export default function Caixa() {
         <aside className="flex flex-col overflow-auto bg-muted/20">
           <div className="border-b px-5 py-3">
             <p className="text-xs uppercase text-muted-foreground">Receita do dia</p>
-            <p className="mt-1 text-2xl font-bold">{centsToBRL(totalDia)}</p>
+            <p className="mt-1 text-2xl font-bold">
+              <CountUp value={totalDia} format={centsToBRL} />
+            </p>
           </div>
           <CardTotal label="Dinheiro" hint="F1" valor={totaisVendas.dinheiro} />
           <CardTotal label="Pix" hint="F2" valor={totaisVendas.pix} />
@@ -350,7 +367,8 @@ function CardTotal({ label, hint, valor, subtitle, negativo }: CardProps) {
         <kbd className="mt-1 inline-block">{hint}</kbd>
       </div>
       <p className={cn('font-mono text-base font-semibold', negativo && valor > 0 && 'text-destructive')}>
-        {negativo && valor > 0 ? '-' : ''}{centsToBRL(valor)}
+        {negativo && valor > 0 ? '-' : ''}
+        <CountUp value={valor} format={centsToBRL} />
       </p>
     </div>
   )
