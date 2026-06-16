@@ -5,6 +5,12 @@ import { supabase } from '@/lib/supabase'
 import { useRealtimeTable } from '@/hooks/useRealtimeTable'
 import type { Database } from '@/types/database'
 import { Link } from 'react-router-dom'
+import { motion } from 'motion/react'
+import { BlurText } from '@/components/reactbits/BlurText'
+import { CountUp } from '@/components/reactbits/CountUp'
+import { SpotlightCard } from '@/components/reactbits/SpotlightCard'
+import { cn } from '@/lib/utils'
+import { staggerContainer, staggerItem, useTilt3d } from '@/lib/motion'
 
 type Venda = Database['public']['Tables']['vendas']['Row']
 type Recebimento = Database['public']['Tables']['recebimentos_promissoria']['Row']
@@ -74,18 +80,25 @@ export default function Dashboard() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold">Dashboard — {hoje}</h1>
+      <h1 className="text-2xl font-bold">
+        <BlurText text={`Dashboard — ${hoje}`} />
+      </h1>
       <p className="text-sm text-muted-foreground">Atualização ao vivo via Realtime.</p>
 
-      <div className="mt-6 grid grid-cols-4 gap-4">
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+        className="mt-6 grid grid-cols-4 gap-4"
+      >
         <Kpi label="Receita Bruta" valor={totalVendas} />
         <Kpi label="Receita Real Hoje" valor={receitaRealHoje} subtitle="exclui promissórias geradas" highlight />
         <Kpi label="Recebimentos Promissória" valor={totalRecebimentos} subtitle="quita dívidas anteriores" />
         <Kpi label="Despesas" valor={totalDespesas} negativo />
-      </div>
+      </motion.div>
 
       <div className="mt-6 grid grid-cols-2 gap-4">
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">Vendas por forma</h3>
           <Linha label="Dinheiro" valor={porForma('dinheiro', vendas.rows)} />
           <Linha label="Pix" valor={porForma('pix', vendas.rows)} />
@@ -93,7 +106,7 @@ export default function Dashboard() {
           <Linha label="Crédito" valor={porForma('credito', vendas.rows)} />
           <Linha label="Promissória" valor={promissoriaHoje} muted />
         </div>
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">Recebimentos por forma</h3>
           <Linha label="Dinheiro" valor={porForma('dinheiro', recebimentos.rows)} />
           <Linha label="Pix" valor={porForma('pix', recebimentos.rows)} />
@@ -106,7 +119,7 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4">
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold uppercase text-muted-foreground">
               Caixas não fechados (dias anteriores)
@@ -127,7 +140,7 @@ export default function Dashboard() {
             </ul>
           )}
         </div>
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold uppercase text-muted-foreground">
               Promissórias atrasadas
@@ -163,14 +176,26 @@ export default function Dashboard() {
 }
 
 function Kpi({ label, valor, subtitle, highlight, negativo }: { label: string; valor: number; subtitle?: string; highlight?: boolean; negativo?: boolean }) {
+  const tilt = useTilt3d(7)
   return (
-    <div className={`rounded-lg border p-4 ${highlight ? 'bg-primary/10 border-primary/40' : 'bg-card'}`}>
-      <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-2xl font-bold font-mono ${negativo && valor > 0 ? 'text-destructive' : ''}`}>
-        {negativo && valor > 0 ? '-' : ''}{centsToBRL(valor)}
-      </p>
-      {subtitle && <p className="mt-1 text-[10px] text-muted-foreground">{subtitle}</p>}
-    </div>
+    <motion.div variants={staggerItem}>
+      <SpotlightCard
+        onPointerMove={tilt.onPointerMove}
+        onPointerLeave={tilt.onPointerLeave}
+        style={tilt.style}
+        className={cn(
+          'rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md',
+          highlight ? 'border-accent/50 bg-accent/10' : 'bg-card',
+        )}
+      >
+        <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
+        <p className={cn('mt-1 font-mono text-2xl font-bold', negativo && valor > 0 && 'text-destructive')}>
+          {negativo && valor > 0 ? '-' : ''}
+          <CountUp value={valor} format={centsToBRL} />
+        </p>
+        {subtitle && <p className="mt-1 text-[10px] text-muted-foreground">{subtitle}</p>}
+      </SpotlightCard>
+    </motion.div>
   )
 }
 

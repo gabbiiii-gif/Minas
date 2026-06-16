@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { cn } from '@/lib/utils'
 import type { Database } from '@/types/database'
+import { BlurText } from '@/components/reactbits/BlurText'
 
 type Fechamento = Database['public']['Tables']['fechamentos_caixa']['Row']
 type FechamentoComOperador = Fechamento & { operador_nome?: string | null }
@@ -75,7 +76,7 @@ export default function Fechamentos() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold">Fechamentos de Caixa</h1>
+      <h1 className="text-2xl font-bold"><BlurText text="Fechamentos de Caixa" /></h1>
       <p className="mb-4 text-sm text-muted-foreground">
         Histórico de fechamentos. Admin pode reabrir caixas fechados.
       </p>
@@ -85,16 +86,17 @@ export default function Fechamentos() {
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhum fechamento ainda.</p>
       ) : (
-        <table className="w-full border-collapse text-sm">
-          <thead className="border-b text-left">
+        <div className="overflow-auto rounded-xl border bg-card shadow-sm">
+        <table className="w-full border-collapse text-sm [&_td]:px-2 [&_td:first-child]:px-4">
+          <thead className="sticky top-0 z-10 border-b bg-muted/80 text-left backdrop-blur">
             <tr>
-              <th className="py-2">Data</th>
-              <th>Operador</th>
-              <th>Status</th>
-              <th>Total sistema</th>
-              <th>Total físico</th>
-              <th>Diferença</th>
-              <th>Fechado em</th>
+              <th className="px-4 py-2.5">Data</th>
+              <th className="px-2">Operador</th>
+              <th className="px-2">Status</th>
+              <th className="px-2">Total sistema</th>
+              <th className="px-2">Total físico</th>
+              <th className="px-2">Diferença</th>
+              <th className="px-2">Fechado em</th>
               <th></th>
             </tr>
           </thead>
@@ -107,7 +109,7 @@ export default function Fechamentos() {
                 f.total_fisico_dinheiro + f.total_fisico_pix +
                 f.total_fisico_debito + f.total_fisico_credito
               return (
-                <tr key={f.id} className="border-b align-top">
+                <tr key={f.id} className="border-b align-top transition-colors hover:bg-muted/40">
                   <td className="py-2 font-mono">{f.data}</td>
                   <td>{f.operador_nome ?? f.operador_id.substring(0, 8)}</td>
                   <td>
@@ -145,9 +147,10 @@ export default function Fechamentos() {
             })}
           </tbody>
         </table>
+        </div>
       )}
 
-      <div className="mt-6 rounded border bg-amber-50 p-4 text-sm text-amber-900">
+      <div className="mt-6 rounded-xl border bg-amber-50 p-4 text-sm text-amber-900">
         <strong>Aviso:</strong> reabrir caixa libera o operador a lançar/editar.
         A reabertura fica registrada na observação + auditoria. Use só pra corrigir erro.
       </div>

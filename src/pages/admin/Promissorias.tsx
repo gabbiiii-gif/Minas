@@ -3,6 +3,7 @@ import { centsToBRL } from '@/lib/money'
 import { supabase } from '@/lib/supabase'
 import type { Database } from '@/types/database'
 import { cn } from '@/lib/utils'
+import { BlurText } from '@/components/reactbits/BlurText'
 
 type Aberta = Database['public']['Views']['vw_promissorias_em_aberto']['Row']
 type Status = 'todas' | 'aberta' | 'parcial' | 'atrasadas'
@@ -31,7 +32,7 @@ export default function Promissorias() {
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Promissórias em aberto</h1>
+          <h1 className="text-2xl font-bold"><BlurText text="Promissórias em aberto" /></h1>
           <p className="text-sm text-muted-foreground">{items.length} promissória(s) — saldo total {centsToBRL(totalSaldo)}</p>
         </div>
         <div className="flex gap-1">
@@ -53,33 +54,42 @@ export default function Promissorias() {
       {loading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>
       ) : (
-        <table className="w-full border-collapse text-sm">
-          <thead className="border-b text-left">
-            <tr>
-              <th className="py-2">Cliente</th>
-              <th>Original</th>
-              <th>Pago</th>
-              <th>Saldo</th>
-              <th>Vencimento</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((p) => (
-              <tr key={p.id ?? ''} className={cn('border-b', p.atrasada && 'bg-red-50')}>
-                <td className="py-2">{p.cliente_nome}</td>
-                <td className="font-mono">{centsToBRL(p.valor_original ?? 0)}</td>
-                <td className="font-mono">{centsToBRL(p.valor_pago ?? 0)}</td>
-                <td className="font-mono font-semibold">{centsToBRL(p.saldo ?? 0)}</td>
-                <td>{p.vencimento ?? '—'}{p.atrasada ? ' ⚠️' : ''}</td>
-                <td><span className="rounded bg-muted px-2 py-0.5 text-xs">{p.status}</span></td>
+        <div className="overflow-auto rounded-xl border bg-card shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead className="sticky top-0 z-10 border-b bg-muted/80 text-left backdrop-blur">
+              <tr>
+                <th className="px-4 py-2.5">Cliente</th>
+                <th className="px-2">Original</th>
+                <th className="px-2">Pago</th>
+                <th className="px-2">Saldo</th>
+                <th className="px-2">Vencimento</th>
+                <th className="px-2">Status</th>
               </tr>
-            ))}
-            {items.length === 0 && (
-              <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Sem promissórias.</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((p) => (
+                <tr key={p.id ?? ''} className={cn('border-b transition-colors hover:bg-muted/40', p.atrasada && 'bg-red-50 hover:bg-red-100')}>
+                  <td className="px-4 py-2">{p.cliente_nome}</td>
+                  <td className="px-2 font-mono">{centsToBRL(p.valor_original ?? 0)}</td>
+                  <td className="px-2 font-mono">{centsToBRL(p.valor_pago ?? 0)}</td>
+                  <td className="px-2 font-mono font-semibold">{centsToBRL(p.saldo ?? 0)}</td>
+                  <td className="px-2">{p.vencimento ?? '—'}{p.atrasada ? ' ⚠️' : ''}</td>
+                  <td className="px-2">
+                    <span className={cn(
+                      'rounded-full px-2 py-0.5 text-xs font-semibold',
+                      p.status === 'parcial' ? 'bg-amber-100 text-amber-800' : 'bg-muted text-muted-foreground',
+                    )}>
+                      {p.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Sem promissórias.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { centsToBRL } from '@/lib/money'
-import { formatBelem, formatTimeBelem } from '@/lib/date'
+import { formatTimeBelem, hojeBelem } from '@/lib/date'
 import { supabase } from '@/lib/supabase'
 import { toCSV, downloadCSV, type RelatorioRow } from '@/lib/report'
+import { BlurText } from '@/components/reactbits/BlurText'
+import { CountUp } from '@/components/reactbits/CountUp'
 
 export default function Relatorios() {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = hojeBelem()
   const [inicio, setInicio] = useState(today)
   const [fim, setFim] = useState(today)
   const [rows, setRows] = useState<RelatorioRow[]>([])
@@ -90,7 +92,7 @@ export default function Relatorios() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold">Relatórios</h1>
+      <h1 className="text-2xl font-bold"><BlurText text="Relatórios" /></h1>
       <p className="mb-4 text-sm text-muted-foreground">
         Filtre por período e exporte em CSV (compatível Excel).
       </p>
@@ -127,9 +129,9 @@ export default function Relatorios() {
           <h3 className="mb-2 mt-6 text-sm font-semibold uppercase text-muted-foreground">
             {rows.length} linhas
           </h3>
-          <div className="overflow-auto rounded border">
+          <div className="max-h-[60vh] overflow-auto rounded-xl border shadow-sm">
             <table className="w-full text-xs">
-              <thead className="bg-muted/50 text-left">
+              <thead className="sticky top-0 z-10 bg-muted/80 text-left backdrop-blur">
                 <tr>
                   <th className="px-3 py-2">Data</th>
                   <th>Hora</th>
@@ -142,7 +144,7 @@ export default function Relatorios() {
               </thead>
               <tbody>
                 {rows.slice(0, 200).map((r, i) => (
-                  <tr key={i} className="border-t">
+                  <tr key={i} className="border-t transition-colors hover:bg-muted/40">
                     <td className="px-3 py-1.5">{r.data}</td>
                     <td>{r.hora}</td>
                     <td>{r.tipo}</td>
@@ -168,10 +170,11 @@ export default function Relatorios() {
 
 function Resumo({ label, valor, subtitle, negativo }: { label: string; valor: number; subtitle?: string; negativo?: boolean }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div className="rounded-xl border bg-card p-4 shadow-sm">
       <p className="text-xs uppercase text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-xl font-bold font-mono ${negativo && valor > 0 ? 'text-destructive' : ''}`}>
-        {negativo && valor > 0 ? '-' : ''}{centsToBRL(valor)}
+      <p className={`mt-1 font-mono text-xl font-bold ${negativo && valor > 0 ? 'text-destructive' : ''}`}>
+        {negativo && valor > 0 ? '-' : ''}
+        <CountUp value={valor} format={centsToBRL} />
       </p>
       {subtitle && <p className="mt-1 text-[10px] text-muted-foreground">{subtitle}</p>}
     </div>
