@@ -30,6 +30,14 @@ const FORMA_BTN: Record<FormaDireta, string> = {
   credito: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100',
 }
 
+/** Soma `delta` dias a uma data 'yyyy-mm-dd' sem drift de fuso. */
+function stepDay(dateStr: string, delta: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const dt = new Date(Date.UTC(y, m - 1, d))
+  dt.setUTCDate(dt.getUTCDate() + delta)
+  return dt.toISOString().slice(0, 10)
+}
+
 export default function Caixa() {
   const { user, profile } = useAuthStore()
   const isAdmin = profile?.role === 'admin'
@@ -170,6 +178,13 @@ export default function Caixa() {
             <h1 className="text-xl font-bold"><BlurText text="Caixa —" /></h1>
             {isAdmin ? (
               <>
+                <button
+                  onClick={() => setActiveDate(stepDay(activeDate, -1))}
+                  title="Dia anterior"
+                  className="rounded border px-2 py-1 text-sm font-bold hover:bg-muted"
+                >
+                  ‹
+                </button>
                 <input
                   type="date"
                   value={activeDate}
@@ -177,6 +192,14 @@ export default function Caixa() {
                   onChange={(e) => setActiveDate(e.target.value || hoje)}
                   className="rounded border bg-background px-2 py-1 font-mono text-base font-bold outline-none ring-ring focus-visible:ring-2"
                 />
+                <button
+                  onClick={() => { const n = stepDay(activeDate, 1); if (n <= hoje) setActiveDate(n) }}
+                  disabled={activeDate >= hoje}
+                  title="Próximo dia"
+                  className="rounded border px-2 py-1 text-sm font-bold hover:bg-muted disabled:opacity-40"
+                >
+                  ›
+                </button>
                 {activeDate !== hoje && (
                   <button
                     onClick={() => setActiveDate(hoje)}
