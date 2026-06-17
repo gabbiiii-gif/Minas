@@ -6,40 +6,9 @@ import { animate } from 'animejs'
 import { useAuthStore } from '@/stores/auth'
 import { fadeUp, staggerContainer, staggerItem, useTilt3d } from '@/lib/motion'
 import { BlurText } from '@/components/reactbits/BlurText'
-import CardNav, { type CardNavItem } from '@/components/reactbits/CardNav'
 
 const VIDEO_URL =
   'https://res.cloudinary.com/dfonotyfb/video/upload/v1775585556/dds3_1_rqhg7x.mp4'
-
-const navItems: CardNavItem[] = [
-  {
-    label: 'Sobre',
-    bgColor: '#1b1722',
-    textColor: '#fff',
-    links: [
-      { label: 'Minas Auto Peças', ariaLabel: 'Sobre a Minas Auto Peças' },
-      { label: 'Altamira / PA', ariaLabel: 'Localização' },
-    ],
-  },
-  {
-    label: 'Suporte',
-    bgColor: '#2a2230',
-    textColor: '#fff',
-    links: [
-      { label: 'WhatsApp', href: 'https://wa.me/', ariaLabel: 'Suporte por WhatsApp' },
-      { label: 'E-mail', href: 'mailto:biel.atm11@gmail.com', ariaLabel: 'Suporte por e-mail' },
-    ],
-  },
-  {
-    label: 'Sistema',
-    bgColor: '#2a2230',
-    textColor: '#fff',
-    links: [
-      { label: 'Caixa', ariaLabel: 'Módulo Caixa' },
-      { label: 'Promissórias', ariaLabel: 'Módulo Promissórias' },
-    ],
-  },
-]
 
 export default function Login() {
   const location = useLocation()
@@ -91,17 +60,6 @@ export default function Login() {
       {/* Aurora animada + overlay de legibilidade */}
       <div className="aurora absolute inset-0 z-10 opacity-70 mix-blend-screen" />
       <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/85 via-black/45 to-black/65" />
-
-      {/* Nav flutuante */}
-      <CardNav
-        items={navItems}
-        baseColor="rgba(20,18,26,0.7)"
-        menuColor="#f8fafc"
-        buttonBgColor="#d97706"
-        buttonTextColor="#fff"
-        ctaLabel="Entrar"
-        onCta={() => emailRef.current?.focus()}
-      />
 
       {/* Card de login */}
       <div className="relative z-20 flex h-full items-center justify-center p-6">
